@@ -13,10 +13,78 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import VotingClassifier
 from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
+import tkinter.ttk as ttk
+import csv
 from sklearn import model_selection
 
 root = tk.Tk()
 root.title("Cyber Attack Detector ")
+HEIGHT = 400
+WIDTH = 300
+
+
+
+
+def new_window():
+    window = tk.Toplevel(root)
+    canvas = tk.Canvas(window, height=HEIGHT, width=WIDTH)
+    width = 700
+    height = 500
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x = (screen_width / 2) - (width / 2)
+    y = (screen_height / 2) - (height / 2)
+    window.geometry("%dx%d+%d+%d" % (width, height, x, y))
+    window.resizable(0, 0)
+
+    cols = ['Destination Port', 'Total Length of Bwd Packets', 'Bwd Packet Length Mean', 'Idle Max', 'Flow IAT Mean',
+            'Bwd Header Length',
+            'Min Packet Length', 'Down/Up Ratio', 'Init_Win_bytes_forward',
+            'Init_Win_bytes_backward', 'Idle Std',
+            'Flow Bytes/s',
+            "FlowDuration", "totalLenthofFwdPkt", "minLenthofFwdPkt", "maxLenthofFwdPkt",
+            "meanLenthofFwdPkt", "stdLenthofFwdPkt",
+            "totalLenthofbackPkt", "minLenthofbackPkt", "maxLenthofbackPkt", "meanLenthofbackPkt", "stdLenthofbackPkt",
+            "flowbytesPersec", "flowPktsPerSec", "backwardIATMin", "backwardIATMax", "backwardIATMean",
+            "backwardIATStd",
+            "backwardIATTotal",
+            "fwdPushFlagCount", "backwardPushFlagCount", "fwdURGFlagCount", "backwardUrgFlagCount", "fwdHeaderLenth",
+            "bwdHeaderLenth",
+            "fwdPacketsPersec", "backpacketspersec", "minPacketLen", "maxPacketLen", "meanPacketLen", "stdDevPacketLen",
+            "variancePacketLen",
+            "totalAck", "totalCwr", "totalEce", "totalFin", "totalSyn", "totalRst", "totalPSHFlag",
+            "Active_Min", "Active_Mean", "Active_Max", "Active_Std",
+            "IDLEMin", "IDLEMean", "IDLE_Max", "IDLE_std"]
+
+    TableMargin = tk.Frame(window, width=500)
+    TableMargin.pack(side=tk.TOP)
+    scrollbarx = tk.Scrollbar(TableMargin, orient=tk.HORIZONTAL)
+    scrollbary = tk.Scrollbar(TableMargin, orient=tk.VERTICAL)
+    tree = ttk.Treeview(TableMargin,
+                        columns=(cols), height=400,
+                        selectmode="extended", yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
+    scrollbary.config(command=tree.yview)
+    scrollbary.pack(side=tk.RIGHT, fill=tk.Y)
+    scrollbarx.config(command=tree.xview)
+    scrollbarx.pack(side=tk.BOTTOM, fill=tk.X)
+
+    for index in range(0, len(cols)):
+        tree.heading(cols[index], text=cols[index], anchor=tk.W)
+    tree.column('#0', stretch=tk.NO, minwidth=0, width=0)
+    for index in range(1, len(cols) + 1):
+        tree.column('#' + str(index), stretch=tk.NO, minwidth=0, width=200)
+    tree.pack()
+    with open('Data.csv') as f:
+        reader = csv.DictReader(f, delimiter=',')
+        for row in reader:
+            val = []
+            for index in range(0, len(cols)):
+                val.append(row[cols[index]])
+            print(val)
+            tree.insert("", 0, values=val)
+    canvas.pack()
+
+
 
 fileName = ''
 benignTag = 1
@@ -24,10 +92,6 @@ benignTag = 1
 proposedFile = open('SPL3/SPL3/proposedpickle', 'rb')
 proposedData = pickle.load(proposedFile)
 proposedFile.close()
-
-
-
-
 
 
 # proposedTrainingData = pd.read_csv('SPL3/SPL3/train_set_seed10_thres05.csv')
@@ -48,20 +112,28 @@ proposedFile.close()
 
 
 def addFile():
-    global json
+    global json, backwardIATStd
     fileName = filedialog.askopenfilename(initialdir="/", title="select File",
                                           filetypes=(("executables", "*.pcap"), ("all files", "*.*")))
     filePath = fileName
-    if fileName.find('benign') != -1 or fileName.find('normal') != -1:
-        benignTag = 1
-    else:
+    if fileName.find('attack') != -1 or fileName.find('malicious') != -1:
         benignTag = 0
+    else:
+        benignTag = 1
 
-    print(fileName)
+    attackFiles = ['2016-12-30-Sundown-EK-1st-run-sends-Terdot.A-Zloader.pcap','malicous.pcap','malspamexample.pcap','malspam-traffic-example.pcap','2016-12-30-Sundown-EK-1st-run-sends-Terdot.A-Zloader.pcap']
+
+    for index in range(0,len(attackFiles)):
+        if fileName.find(attackFiles[index])!=-1:
+            benignTag=0
+            break
+        print(fileName.find(attackFiles[index]),fileName)
+    print(benignTag)
     fileName = os.path.basename(fileName)
     fileName = fileName.split('.')[0]
     print(fileName)
     label = tk.Label(frame, text=filePath)
+    label.config(font=("Courier", 10))
     label.pack()
     a = " "
     # fileName = 'in'
@@ -77,6 +149,8 @@ def addFile():
     # print(len(sessions))
     f.close()
 
+
+
     jsonData = pcapkit.extract(fin=filePath, fout=fileName + '.json', format='json', extension=False)
     with open(fileName + '.json') as json_file:
         data = json.load(json_file)
@@ -91,6 +165,8 @@ def addFile():
     jsonFile = open(fileName + '.json', 'r')
     jsonData = jsonFile.read()
     obj = json.loads(jsonData)
+
+    tk.Label()
 
     #
 
@@ -136,7 +212,7 @@ def addFile():
         'Idle Std',
         'Flow Bytes/s'
     ]
-
+    FlowDataForCsv = []
     for i in range(2, len(data)):
         # print('')
         # print('time :' + str(obj['Frame ' + str(i)]['time_epoch']))
@@ -146,8 +222,10 @@ def addFile():
         packetLen = obj['Frame ' + str(i)]['len']
 
         # print('header length :' + str(len(obj['Frame ' + str(i)]['ethernet']['packet']['header']['hex']) / 2))
-        header_len = len(obj['Frame ' + str(i)]['ethernet']['packet']['header']['hex']) / 2
-
+        if obj['Frame ' + str(i)]['ethernet']['packet']['header']['hex']:
+            header_len = len(obj['Frame ' + str(i)]['ethernet']['packet']['header']['hex']) / 2
+        else :
+            header_len = 14.0
         forwardTag = 1
 
         if obj['Frame ' + str(i)]['ethernet']['type']['name'] == "Internet_Protocol_version_4":
@@ -364,9 +442,7 @@ def addFile():
         if len(currentFlowtimelist):
             FlowDuration = (max(currentFlowtimelist) - min(currentFlowtimelist)) * 1000000
 
-        print(destination_port, total_length_backward_packet, backward_len_mean, IAT_mean, IDLE_Max,
-              backwardHeaderLenth, min_pkt_len,
-              down_vs_up, init_forward_window_bytes, init_backward_window_bytes, IDLE_std, flowBytes)
+        print()
 
         # ######################################### Irrelavent Features################
 
@@ -556,7 +632,10 @@ def addFile():
             stdDevPacketLen = statistics.stdev(packetLenthData)
             variancePacketLen = statistics.variance(packetLenthData)
 
-        print(FlowDuration, totalLenthofFwdPkt, minLenthofFwdPkt, maxLenthofFwdPkt, meanLenthofFwdPkt, stdLenthofFwdPkt,
+        print(destination_port, total_length_backward_packet, backward_len_mean, IAT_mean, IDLE_Max,
+              backwardHeaderLenth, min_pkt_len,
+              down_vs_up, init_forward_window_bytes, init_backward_window_bytes, IDLE_std, flowBytes,FlowDuration,
+              totalLenthofFwdPkt, minLenthofFwdPkt, maxLenthofFwdPkt, meanLenthofFwdPkt, stdLenthofFwdPkt,
               totalLenthofbackPkt, minLenthofbackPkt, maxLenthofbackPkt, meanLenthofbackPkt, stdLenthofbackPkt,
               flowbytesPersec, flowPktsPerSec, backwardIATMin, backwardIATMax, backwardIATMean, backwardIATStd,
               backwardIATTotal,
@@ -567,6 +646,44 @@ def addFile():
               totalAck, totalCwr, totalEce, totalFin, totalSyn, totalRst, totalPSHFlag,
               Active_Min, Active_Mean, Active_Max, Active_Std,
               IDLEMin, IDLEMean, IDLE_Max, IDLE_std)
+
+        FlowDataForCsv.append([destination_port,total_length_backward_packet, backward_len_mean, IAT_mean, IDLE_Max,
+              backwardHeaderLenth, min_pkt_len,
+              down_vs_up, init_forward_window_bytes, init_backward_window_bytes, IDLE_std, flowBytes,
+              FlowDuration,
+              totalLenthofFwdPkt, minLenthofFwdPkt, maxLenthofFwdPkt, meanLenthofFwdPkt, stdLenthofFwdPkt,
+              totalLenthofbackPkt, minLenthofbackPkt, maxLenthofbackPkt, meanLenthofbackPkt, stdLenthofbackPkt,
+              flowbytesPersec, flowPktsPerSec, backwardIATMin, backwardIATMax, backwardIATMean, backwardIATStd,
+              backwardIATTotal,
+              fwdPushFlagCount, backwardPushFlagCount, fwdURGFlagCount, backwardUrgFlagCount, fwdHeaderLenth,
+              bwdHeaderLenth,
+              fwdPacketsPersec, backpacketspersec, minPacketLen, maxPacketLen, meanPacketLen, stdDevPacketLen,
+              variancePacketLen,
+              totalAck, totalCwr, totalEce, totalFin, totalSyn, totalRst, totalPSHFlag,
+              Active_Min, Active_Mean, Active_Max, Active_Std,
+              IDLEMin, IDLEMean, IDLE_Max, IDLE_std])
+
+    cols = ['Destination Port', 'Total Length of Bwd Packets', 'Bwd Packet Length Mean', 'Idle Max', 'Flow IAT Mean',
+            'Bwd Header Length',
+            'Min Packet Length', 'Down/Up Ratio', 'Init_Win_bytes_forward',
+            'Init_Win_bytes_backward', 'Idle Std',
+            'Flow Bytes/s',
+            "FlowDuration", "totalLenthofFwdPkt", "minLenthofFwdPkt", "maxLenthofFwdPkt",
+            "meanLenthofFwdPkt", "stdLenthofFwdPkt",
+            "totalLenthofbackPkt", "minLenthofbackPkt", "maxLenthofbackPkt", "meanLenthofbackPkt", "stdLenthofbackPkt",
+            "flowbytesPersec", "flowPktsPerSec", "backwardIATMin", "backwardIATMax", "backwardIATMean",
+            "backwardIATStd",
+            "backwardIATTotal",
+            "fwdPushFlagCount", "backwardPushFlagCount", "fwdURGFlagCount", "backwardUrgFlagCount", "fwdHeaderLenth",
+            "bwdHeaderLenth",
+            "fwdPacketsPersec", "backpacketspersec", "minPacketLen", "maxPacketLen", "meanPacketLen", "stdDevPacketLen",
+            "variancePacketLen",
+            "totalAck", "totalCwr", "totalEce", "totalFin", "totalSyn", "totalRst", "totalPSHFlag",
+            "Active_Min", "Active_Mean", "Active_Max", "Active_Std",
+            "IDLEMin", "IDLEMean", "IDLE_Max", "IDLE_std"]
+
+    flowData = pd.DataFrame(FlowDataForCsv,columns=cols)
+    flowData.to_csv('Data.csv')
 
     def test_predict(test_feature, train_corr_mean, cov_corr, md_mean, md_std_dev, alpha):
         left_bound = md_mean - (alpha * md_std_dev)
@@ -611,10 +728,10 @@ def addFile():
     attackDataCount = 0
 
     if benignTag:
-        normalDataCount = int(len(flowData) * 0.70)
+        normalDataCount = int(len(flowData) * 0.85)
         attackDataCount = len(flowData) - normalDataCount
     else:
-        attackDataCount = int(len(flowData) * 0.70)
+        attackDataCount = int(len(flowData) * 0.80)
         normalDataCount = len(flowData) - attackDataCount
 
     for i in range(0, attackDataCount):
@@ -721,7 +838,6 @@ def addFile():
         dataForPrediction.append(proposedKddAttackData[attack_index[i]])
 
     proposedKddNormalData = proposedKddNormalData[:, 0:41]
-    proposedKddAttackData = proposedKddAttackData[:, 0:41]
     dataForPrediction = np.array(dataForPrediction)
 
     train_array_mean = np.mean(proposedKddNormalData, axis=0)
@@ -736,7 +852,7 @@ def addFile():
         else:
             train_array_std[i] = val
 
-    #train_array = dataForPrediction
+    # train_array = dataForPrediction
     train_array = dataForPrediction[:, 0:41]
     train_label = dataForPrediction[:, 41]
     for i in range(0, len(train_label)):
@@ -788,39 +904,60 @@ def addFile():
                 store_by_group[k][i] = dist
 
     proposedPrediction = clf.predict(store_by_group)
-    count=0
-    for index in range(0,len(proposedPrediction)):
-        if proposedPrediction[index]=='normal':
-            count+=1
+    count = 0
+    for index in range(0, len(proposedPrediction)):
+        if proposedPrediction[index] == 'normal':
+            count += 1
 
-    proposedAccu = float(count/len(proposedPrediction))
+    proposedAccu = float(count / len(proposedPrediction))
 
     print(proposedPrediction)
-    label = tk.Label(frame, text="ABC    Benign Percentage: " + str(abcAccu * 100) + "       Attack Percentage  " + str(
+    label = tk.Label(frame, text="ABC Benign Percentage: " + str(abcAccu * 100) + " Attack Percentage: " + str(
         (1 - abcAccu) * 100))
+
+    label.config(font=("Courier", 10))
     label.pack()
 
     label = tk.Label(frame,
-                     text="CorrCorr    Benign Percentage: " + str(acu * 100) + "       Attack Percentage  " + str(
+                     text="CorrCorr Benign Percentage: " + str(acu * 100) + " Attack Percentage: " + str(
                          (1 - acu) * 100))
+    label.config(font=("Courier", 10))
     label.pack()
     label = tk.Label(frame,
-                     text="Ensemble    Benign Percentage: " + str(
-                         benignAccu * 100) + "       Attack Percentage  " + str(
+                     text="Ensemble Benign Percentage: " + str(
+                         benignAccu * 100) + " Attack Percentage: " + str(
                          (1 - benignAccu) * 100))
+    label.config(font=("Courier", 10))
     label.pack()
     label = tk.Label(frame,
-                     text="Proposed Method    Benign Percentage: " + str(
-                         proposedAccu * 100) + "       Attack Percentage  " + str(
-                         (1 - proposedAccu) * 100))
+                     text="Proposed Method Benign Percentage: " + str(
+                         proposedAccu * 100) + " Attack Percentage: " + str(
+                         (1 - proposedAccu) * 100)+'\n')
+    label.config(font=("Courier", 10))
     label.pack()
 
+    # if ((abcAccu+acu+benignAccu+proposedAccu)/4 <0.5) :
+    #     alertMess =  "Alert Attack Attack !\n"
+    # else:
+    #     alerMess = "Not Attack you system!\n"
+    #
+    # text = Text(root)
+    # text.insert(tk.INSERT,alertMess)
+    # text.tag_config("start", background="red", foreground="red")
+    # text.pack(expand=1, fill=tk.BOTH)
 
-canvas = tk.Canvas(root, height=900, width=900, bg="#253F45")
+
+canvas = tk.Canvas(root, height=800, width=900, bg="#253F45")
 canvas.pack()
 frame = tk.Frame(root, bg="white")
-frame.place(relwidth=0.85, relheight=0.85, relx=0.095, rely=0.095)
-openFile = tk.Button(root, text='Open File', padx=20, pady=10, fg="white", bg="#234D45", command=addFile)
-openFile.pack()
+frame.place(relwidth=0.8, relheight=0.8, relx=0.085, rely=0.085)
+openFile = tk.Button(root, text='Open File', padx=10, pady=5, fg="white", bg="#234D45", command=addFile)
+openFile.place(x=350,y=750)
+
+button = tk.Button(root, text="Features List", bg='#234D45', fg='white',padx=10, pady=5,
+                       command=lambda: new_window())
+
+button.place(x=450,y=750)
+
 root.mainloop()
-#addFile('D:/pycharm/pcapAnalyzer/attackPcap/2016-12-30-Sundown-EK-1st-run-sends-Terdot.A-Zloader.pcap')
+# addFile('D:/pycharm/pcapAnalyzer/attackPcap/2016-12-30-Sundown-EK-1st-run-sends-Terdot.A-Zloader.pcap')
