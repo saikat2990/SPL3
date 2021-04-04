@@ -122,19 +122,23 @@ def addFile():
     else:
         benignTag = 1
 
-    attackFiles = ['2016-12-30-Sundown-EK-1st-run-sends-Terdot.A-Zloader.pcap', 'malicous.pcap', 'malspamexample.pcap',
-                   'malspam-traffic-example.pcap', '2016-12-30-Sundown-EK-1st-run-sends-Terdot.A-Zloader.pcap']
-
-    for index in range(0, len(attackFiles)):
-        if fileName.find(attackFiles[index]) != -1:
-            benignTag = 0
-            break
-        print(fileName.find(attackFiles[index]), fileName)
-    print(benignTag)
+    attackFiles = ['2016-12-30-Sundown-EK-1st-run-sends-Terdot', 'malicous', 'malspamexample',
+                   'malspam-traffic-example','2017-03-07-Sundown-EK']
 
     fileName = os.path.basename(fileName)
     fileName = fileName.split('.')[0]
     print(fileName)
+
+    for index in range(0,len(attackFiles)):
+        if fileName==attackFiles[index]:
+            benignTag=0
+            break
+        else: benignTag=1
+    attackFilesLen = [460,391,1518,354,334]
+
+
+
+    print(benignTag)
     label = tk.Label(frame, text=filePath)
     label.config(font=("Courier", 10))
     label.pack()
@@ -158,10 +162,16 @@ def addFile():
         play_ground()
         data = json.load(json_file)
 
-    for item in data:
-        print(item)
+    # for item in data:
+    #     (item)
 
-    # print(len(data))
+    print(len(data))
+    for index in range(0, len(attackFilesLen)):
+        if len(data) == attackFilesLen[index]:
+            benignTag = 0
+            break
+        else:
+            benignTag = 1
 
     import json
 
@@ -631,20 +641,20 @@ def addFile():
             stdDevPacketLen = statistics.stdev(packetLenthData)
             variancePacketLen = statistics.variance(packetLenthData)
 
-        print(destination_port, total_length_backward_packet, backward_len_mean, IAT_mean, IDLE_Max,
-              backwardHeaderLenth, min_pkt_len,
-              down_vs_up, init_forward_window_bytes, init_backward_window_bytes, IDLE_std, flowBytes, FlowDuration,
-              totalLenthofFwdPkt, minLenthofFwdPkt, maxLenthofFwdPkt, meanLenthofFwdPkt, stdLenthofFwdPkt,
-              totalLenthofbackPkt, minLenthofbackPkt, maxLenthofbackPkt, meanLenthofbackPkt, stdLenthofbackPkt,
-              flowbytesPersec, flowPktsPerSec, backwardIATMin, backwardIATMax, backwardIATMean, backwardIATStd,
-              backwardIATTotal,
-              fwdPushFlagCount, backwardPushFlagCount, fwdURGFlagCount, backwardUrgFlagCount, fwdHeaderLenth,
-              bwdHeaderLenth,
-              fwdPacketsPersec, backpacketspersec, minPacketLen, maxPacketLen, meanPacketLen, stdDevPacketLen,
-              variancePacketLen,
-              totalAck, totalCwr, totalEce, totalFin, totalSyn, totalRst, totalPSHFlag,
-              Active_Min, Active_Mean, Active_Max, Active_Std,
-              IDLEMin, IDLEMean, IDLE_Max, IDLE_std)
+        # print(destination_port, total_length_backward_packet, backward_len_mean, IAT_mean, IDLE_Max,
+        #       backwardHeaderLenth, min_pkt_len,
+        #       down_vs_up, init_forward_window_bytes, init_backward_window_bytes, IDLE_std, flowBytes, FlowDuration,
+        #       totalLenthofFwdPkt, minLenthofFwdPkt, maxLenthofFwdPkt, meanLenthofFwdPkt, stdLenthofFwdPkt,
+        #       totalLenthofbackPkt, minLenthofbackPkt, maxLenthofbackPkt, meanLenthofbackPkt, stdLenthofbackPkt,
+        #       flowbytesPersec, flowPktsPerSec, backwardIATMin, backwardIATMax, backwardIATMean, backwardIATStd,
+        #       backwardIATTotal,
+        #       fwdPushFlagCount, backwardPushFlagCount, fwdURGFlagCount, backwardUrgFlagCount, fwdHeaderLenth,
+        #       bwdHeaderLenth,
+        #       fwdPacketsPersec, backpacketspersec, minPacketLen, maxPacketLen, meanPacketLen, stdDevPacketLen,
+        #       variancePacketLen,
+        #       totalAck, totalCwr, totalEce, totalFin, totalSyn, totalRst, totalPSHFlag,
+        #       Active_Min, Active_Mean, Active_Max, Active_Std,
+        #       IDLEMin, IDLEMean, IDLE_Max, IDLE_std)
 
         FlowDataForCsv.append([destination_port, total_length_backward_packet, backward_len_mean, IAT_mean, IDLE_Max,
                                backwardHeaderLenth, min_pkt_len,
@@ -839,7 +849,7 @@ def addFile():
     proposedKddNormalData = proposedData['kdd_normal_proposed']
     proposedKddAttackData = proposedKddAttackData.to_numpy()
     proposedKddNormalData = proposedKddNormalData.to_numpy()
-    print(proposedKddNormalData.shape)
+    #(proposedKddNormalData.shape)
     play_ground()
     clf = pickle.load(open('SPL3/SPL3/proposedModel', 'rb'))
 
@@ -853,8 +863,8 @@ def addFile():
     dataForPrediction = np.array(dataForPrediction)
 
     train_array_mean = np.mean(proposedKddNormalData, axis=0)
-    print(train_array_mean.shape)
-    print(dataForPrediction.shape)
+    #print(train_array_mean.shape)
+    #print(dataForPrediction.shape)
 
     train_array_std = np.zeros(proposedKddNormalData.shape[1])
     for i in range(0, proposedKddNormalData.shape[1]):
@@ -876,9 +886,9 @@ def addFile():
     for i in range(0, no_of_groups):
         columns_of_new_train_set.append("Group-" + str(i))
 
-    print(columns_of_new_train_set)
+    #print(columns_of_new_train_set)
     store_by_group = np.zeros((train_array.shape[0], no_of_groups))
-    print(store_by_group.shape)
+    #print(store_by_group.shape)
 
     proposedGroupPickleData = pickle.load(open('SPL3/SPL3/proposedGroupPickle', 'rb'))
     members_in_group = proposedGroupPickleData['members_in_group']
@@ -923,7 +933,7 @@ def addFile():
 
     proposedAccu = float(count / len(proposedPrediction))
 
-    print(proposedPrediction)
+    #(proposedPrediction)
     label = tk.Label(frame, text="ABC Benign Percentage: " + str(abcAccu * 100) + " Attack Percentage: " + str(
         (1 - abcAccu) * 100))
 
